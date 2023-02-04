@@ -1,6 +1,7 @@
 // Decorators
 
 // this way is known as decorator factory, because in the end decorator is just a function which takes in a function (constructor function of the class we use decorator at), and does it job
+// please note: decorators name is not required to start as capital but it's just a coding standard and convention to do so (like in angular)
 const Logger = (mes: string) => {
 	console.log({ message: 'logger decorator initialized.' });
 
@@ -102,12 +103,45 @@ const LogParameterDescriptor = (
 	});
 };
 
+// with Template Class decorator which will modify the class constructor it self and will return the modified constructor which will get used when user will create a instance of the class where this decorator is applied
+const ModifyClassConstructorDecorator = (elementId: string) => {
+	console.log({
+		message: 'ModifyClassConstructorDecorator decorator defined.',
+	});
+	return <T extends { new (...args: any[]): { name: string } }>(
+		classConstructorFun: T
+	) => {
+		console.log({
+			message:
+				'ModifyClassConstructorDecorator decorator called on some class with elementId: ' +
+				elementId,
+		});
+		return class extends classConstructorFun {
+			constructor(..._: any[]) {
+				super(..._); // here because the class constructor where i applied this decorator needs these parameters so i need to pass these down to make sure it's get initialized properly, otherwise i will see undefined (as constructor of the inner/extended class does not gets these parameters which it needs)
+				// super(); // if i comment the above line and uncomment this one you will see "undefined" in "#app" content as i'm not passing the "name" parameter/property value to class constructor (the extended class constructor ("super")).
+				const _element = document.querySelector(`#${elementId}`);
+				console.log({
+					message:
+						'ModifyClassConstructorDecorator decorator, class object created (on which this decorator was applied)',
+					elementId,
+					_element,
+					name: this.name,
+				});
+				if (_element) {
+					_element.innerHTML = this.name;
+				}
+			}
+		};
+	};
+};
+
 // create a class and apply decorators to that class to see them in action
 @Logger('Just a message passed to logger decorator')
-@WithTemplate('app')
+@ModifyClassConstructorDecorator('app')
 class Person implements IPerson {
 	@LogPropertyDecorator
-	private _price: number;
+	public _price: number;
 
 	@LogAccessorDecorator
 	set price(val: number) {
@@ -134,3 +168,24 @@ class Person implements IPerson {
 		}
 	}
 }
+
+console.log(
+	'-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------'
+);
+const _person = new Person(
+	'Ahsan is the name i passed when i created a object of person class',
+	10
+);
+console.log({
+	message: 'newly created person object',
+	_person,
+	personName: _person.name,
+});
+_person.name = 'okay now i see the name value :)'; // but it will not get rerendered on the frontend in the "#app" element as that is not configured
+
+console.log({
+	message:
+		'person name updated, but frontend will still show the old value (if the value was passed to constructor by "ModifyClassConstructorDecorator" otherwise it will be "undefined".',
+	_person,
+	personName: _person.name,
+});
