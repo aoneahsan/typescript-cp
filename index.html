@@ -9,7 +9,16 @@
   </head>
   <body>
     <input type="text" id="userinput" />
-    <br />
+    <hr />
+
     <div id="app"></div>
+    <hr />
+    <button class="btn1">
+      this will console undefined due to incorrect "this" keyword binding
+    </button>
+    <button class="btn2">
+      this will console correct message, as the "this" keyword binding is
+      adjusted using "method decorator"
+    </button>
   </body>
 </html>
