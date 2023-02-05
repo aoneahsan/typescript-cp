@@ -1,245 +1,393 @@
-// // Decorators
+const dynamicPartToReplace = 'value'; // this should be what you use as dynamic part in 'EValidationRules' entries
+const dynamicPartSeparator = ':';
 
-// // this way is known as decorator factory, because in the end decorator is just a function which takes in a function (constructor function of the class we use decorator at), and does it job
-// // please note: decorators name is not required to start as capital but it's just a coding standard and convention to do so (like in angular)
-// const Logger = (mes: string) => {
-// 	console.log({ message: 'logger decorator initialized.' });
+enum EValidationRules {
+	Required = 'Required', // for string
+	MinLength = 'MinLength:value', // for string length
+	MaxLength = 'MaxLength:value', // for string length
+	Positive = 'Positive', // for number
+	Min = 'Min:value', // for number
+	Max = 'Max:value', // for number
+}
 
-// 	return (constructor: Function) => {
-// 		console.log({
-// 			message: 'logger decorator applied to class',
-// 			mes,
-// 			class: constructor,
-// 		});
-// 	};
-// };
-
-// interface IPerson {
-// 	name: string;
-// 	price: number;
-// }
-// interface IPersonConstructable {
-// 	new (n: string, p: number): IPerson;
-// }
-
-// // this is a class decorator
-// // hookId: this is id of the element in html file whose content you want to replace with the class "name" property value
-// const WithTemplate = (hookId: string) => {
-// 	console.log({ message: 'WithTemplate decorator initialized.' });
-
-// 	return (constructor: IPersonConstructable) => {
-// 		const personObj = new constructor('Ahsan', 10);
-// 		const elem = document.getElementById(hookId)!;
-// 		elem.innerHTML = personObj.name;
-
-// 		console.log({
-// 			message: 'WithTemplate decorator applied to class',
-// 			hookId,
-// 			class: constructor,
-// 		});
-// 	};
-// };
-
-// // this is a property decorator
-// // target: it will be prototype of object if it's a instance of the class (mean a non-static property), and will be the constructor function if the property on which the decorator is applied is a static property
-// // propertyName: name of the property on which the decorator is applied.
-// const LogPropertyDecorator = (target: any, propertyName: string) => {
-// 	console.log({
-// 		message: 'LogPropertyDecorator applied on some property, see the details',
-// 		target,
-// 		propertyName,
-// 	});
-// };
-
-// // this is a accessor decorator
-// // target: it will be prototype of object if it's a instance of the class (mean a non-static property), and will be the constructor function if the property on which the decorator is applied is a static property
-// // accessorName: name of the accessor function on which the decorator is applied.
-// // propertyDescriptor: the information about the accessor function it self
-// const LogAccessorDecorator = (
-// 	target: any,
-// 	accessorName: string,
-// 	propertyDescriptor: PropertyDescriptor
-// ) => {
-// 	console.log({
-// 		message: 'LogAccessorDecorator applied on some accessor, see the details',
-// 		target,
-// 		accessorName,
-// 		propertyDescriptor,
-// 	});
-// };
-
-// // this is a method decorator
-// // target: it will be prototype of object if it's a instance of the class (mean a non-static property), and will be the constructor function if the property on which the decorator is applied is a static property
-// // methodName: name of the method function on which the decorator is applied.
-// // methodDescriptor: the information about the method function it self
-// const LogMethodDecorator = (
-// 	target: any,
-// 	methodName: string,
-// 	methodDescriptor: PropertyDescriptor
-// ) => {
-// 	console.log({
-// 		message: 'LogMethodDecorator applied on some method, see the details',
-// 		target,
-// 		methodName,
-// 		methodDescriptor,
-// 	});
-// };
-
-// // this is a method decorator
-// // target: it will be prototype of object if it's a instance of the class (mean a non-static property), and will be the constructor function if the property on which the decorator is applied is a static property
-// // methodName: name of the method function, where one of it's parameter received this parameter decorator.
-// // positionOfParameter: the position of the parameter on which this decorator is applied
-// const LogParameterDescriptor = (
-// 	target: any,
-// 	methodName: string,
-// 	positionOfParameter: number
-// ) => {
-// 	console.log({
-// 		message:
-// 			'LogParameterDescriptor applied on some parameter, see the details',
-// 		target,
-// 		methodName,
-// 		positionOfParameter,
-// 	});
-// };
-
-// // with Template Class decorator which will modify the class constructor it self and will return the modified constructor which will get used when user will create a instance of the class where this decorator is applied
-// const ModifyClassConstructorDecorator = (elementId: string) => {
-// 	console.log({
-// 		message: 'ModifyClassConstructorDecorator decorator defined.',
-// 	});
-// 	return <T extends { new (...args: any[]): { name: string } }>(
-// 		classConstructorFun: T
-// 	) => {
-// 		console.log({
-// 			message:
-// 				'ModifyClassConstructorDecorator decorator called on some class with elementId: ' +
-// 				elementId,
-// 		});
-// 		return class extends classConstructorFun {
-// 			constructor(..._: any[]) {
-// 				super(..._); // here because the class constructor where i applied this decorator needs these parameters so i need to pass these down to make sure it's get initialized properly, otherwise i will see undefined (as constructor of the inner/extended class does not gets these parameters which it needs)
-// 				// super(); // if i comment the above line and uncomment this one you will see "undefined" in "#app" content as i'm not passing the "name" parameter/property value to class constructor (the extended class constructor ("super")).
-// 				const _element = document.querySelector(`#${elementId}`);
-// 				console.log({
-// 					message:
-// 						'ModifyClassConstructorDecorator decorator, class object created (on which this decorator was applied)',
-// 					elementId,
-// 					_element,
-// 					name: this.name,
-// 				});
-// 				if (_element) {
-// 					_element.innerHTML = this.name;
-// 				}
-// 			}
-// 		};
-// 	};
-// };
-
-// // create a class and apply decorators to that class to see them in action
-// @Logger('Just a message passed to logger decorator')
-// @ModifyClassConstructorDecorator('app')
-// class Person implements IPerson {
-// 	@LogPropertyDecorator
-// 	public _price: number;
-
-// 	@LogAccessorDecorator
-// 	set price(val: number) {
-// 		if (val > 0) {
-// 			this._price = val;
-// 		} else {
-// 			throw new Error('invalid price should be greater than 0.');
-// 		}
-// 	}
-
-// 	get price() {
-// 		return this._price;
-// 	}
-// 	constructor(public name: string, price: number) {
-// 		this._price = price;
-// 	}
-
-// 	@LogMethodDecorator
-// 	getPriceWithTax(@LogParameterDescriptor tax: number) {
-// 		if (tax > 0) {
-// 			return this._price * (1 + tax);
-// 		} else {
-// 			throw new Error('invalid tax should be greater than 0.');
-// 		}
-// 	}
-// }
-
-// console.log(
-// 	'-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------'
-// );
-// const _person = new Person(
-// 	'Ahsan is the name i passed when i created a object of person class',
-// 	10
-// );
-// console.log({
-// 	message: 'newly created person object',
-// 	_person,
-// 	personName: _person.name,
-// });
-// _person.name = 'okay now i see the name value :)'; // but it will not get rerendered on the frontend in the "#app" element as that is not configured
-
-// console.log({
-// 	message:
-// 		'person name updated, but frontend will still show the old value (if the value was passed to constructor by "ModifyClassConstructorDecorator" otherwise it will be "undefined".',
-// 	_person,
-// 	personName: _person.name,
-// });
-
-// --------------------------------------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------------------------------------
-
-// this is a method decorator
-// target: it will be prototype of object if it's a instance of the class (mean a non-static property), and will be the constructor function if the property on which the decorator is applied is a static property
-// methodName: name of the method function on which the decorator is applied.
-// methodDescriptor: the information about the method function it self
-const AdjustThisBinding = (
-	_: any,
-	__: string,
-	methodDescriptor: PropertyDescriptor
-): PropertyDescriptor => {
-	const originalMethod = methodDescriptor.value;
-
-	const adjustedMethodDescriptor: PropertyDescriptor = {
-		get() {
-			const functionWithThisBindingAdjusted = originalMethod.bind(this); // and now here the "this" keyword will always refer to the class (as this gets called as soon as the definition is defined and not when the method is called).
-			return functionWithThisBindingAdjusted;
-		},
+interface IValidationRules {
+	[className: string]: {
+		[propertyName: string]: string[];
 	};
+}
 
-	return adjustedMethodDescriptor;
+const registeredValidationRules: IValidationRules = {};
+
+// property decorator - the pattern i'm using here to create a property decorator is simple decorator function pattern
+// target: constructor function or prototype of the class object (depending on whether it's a static or non static property where this decorator was applied)
+// propertyName: name of the property where it was applied
+function isRequired(target: any, propertyName: string) {
+	const _className = target.constructor.name; // this is simple javascript as all objects (created from a class print) have a constructor function and also have a "name" property which is the name of the class it self.
+
+	if (_className) {
+		// first check if the "registeredValidationRules" object have a entry for this className already or not, if not, then initialized that using a empty object
+		if (!registeredValidationRules[_className]) {
+			registeredValidationRules[_className] = {};
+		}
+
+		// now check if the "registeredValidationRules[_className]" object have a entry for this propertyName already or not, if not, then initialized that using a empty array
+		if (
+			!registeredValidationRules[_className][propertyName] ||
+			!registeredValidationRules[_className][propertyName].length
+		) {
+			registeredValidationRules[_className][propertyName] = [];
+		}
+
+		// now add the validation rule needed for this validator decorator and keep the already applied rules for the field
+		registeredValidationRules[_className] = {
+			...registeredValidationRules[_className],
+			[propertyName]: [
+				...registeredValidationRules[_className][propertyName],
+				EValidationRules.Required,
+			],
+		};
+	}
+}
+
+// property decorator - the pattern i'm using here to create a property decorator is "decorator factory pattern", as it return the actual decorator function
+// will need to think how to complete this one, as the problem right now is that, the 'MinLength:value' will not be equal to 'MinLength:{some number here}' like 'MinLength:10'
+// got one solution for this, let check if the validation rule includes rather than ==
+function MinLength(_value: number) {
+	if (_value < 0) {
+		throw new Error('Should be greater than 0');
+	}
+	return (target: any, propertyName: string) => {
+		const _className = target.constructor.name; // this is simple javascript as all objects (created from a class print) have a constructor function and also have a "name" property which is the name of the class it self.
+
+		if (_className) {
+			// first check if the "registeredValidationRules" object have a entry for this className already or not, if not, then initialized that using a empty object
+			if (!registeredValidationRules[_className]) {
+				registeredValidationRules[_className] = {};
+			}
+
+			// now check if the "registeredValidationRules[_className]" object have a entry for this propertyName already or not, if not, then initialized that using a empty array
+			if (
+				!registeredValidationRules[_className][propertyName] ||
+				!registeredValidationRules[_className][propertyName].length
+			) {
+				registeredValidationRules[_className][propertyName] = [];
+			}
+
+			const minLengthValue = EValidationRules.MinLength.replace(
+				dynamicPartToReplace,
+				_value.toString()
+			);
+
+			// now add the validation rule needed for this validator decorator and keep the already applied rules for the field
+			registeredValidationRules[_className] = {
+				...registeredValidationRules[_className],
+				[propertyName]: [
+					...registeredValidationRules[_className][propertyName],
+					minLengthValue,
+				],
+			};
+		}
+	};
+}
+
+function MaxLength(_value: number) {
+	if (_value < 0) {
+		throw new Error('Should be greater than 0');
+	}
+	return (target: any, propertyName: string) => {
+		const _className = target.constructor.name; // this is simple javascript as all objects (created from a class print) have a constructor function and also have a "name" property which is the name of the class it self.
+
+		if (_className) {
+			// first check if the "registeredValidationRules" object have a entry for this className already or not, if not, then initialized that using a empty object
+			if (!registeredValidationRules[_className]) {
+				registeredValidationRules[_className] = {};
+			}
+
+			// now check if the "registeredValidationRules[_className]" object have a entry for this propertyName already or not, if not, then initialized that using a empty array
+			if (
+				!registeredValidationRules[_className][propertyName] ||
+				!registeredValidationRules[_className][propertyName].length
+			) {
+				registeredValidationRules[_className][propertyName] = [];
+			}
+
+			const maxLengthValue = EValidationRules.MaxLength.replace(
+				dynamicPartToReplace,
+				_value.toString()
+			);
+
+			// now add the validation rule needed for this validator decorator and keep the already applied rules for the field
+			registeredValidationRules[_className] = {
+				...registeredValidationRules[_className],
+				[propertyName]: [
+					...registeredValidationRules[_className][propertyName],
+					maxLengthValue,
+				],
+			};
+		}
+	};
+}
+
+// here i'm not using a decorator factory, but just a simple decorator function
+function Positive(target: any, propertyName: string) {
+	const _className = target.constructor.name; // this is simple javascript as all objects (created from a class print) have a constructor function and also have a "name" property which is the name of the class it self.
+
+	if (_className) {
+		// first check if the "registeredValidationRules" object have a entry for this className already or not, if not, then initialized that using a empty object
+		if (!registeredValidationRules[_className]) {
+			registeredValidationRules[_className] = {};
+		}
+
+		// now check if the "registeredValidationRules[_className]" object have a entry for this propertyName already or not, if not, then initialized that using a empty array
+		if (
+			!registeredValidationRules[_className][propertyName] ||
+			!registeredValidationRules[_className][propertyName].length
+		) {
+			registeredValidationRules[_className][propertyName] = [];
+		}
+
+		// now add the validation rule needed for this validator decorator and keep the already applied rules for the field
+		registeredValidationRules[_className] = {
+			...registeredValidationRules[_className],
+			[propertyName]: [
+				...registeredValidationRules[_className][propertyName],
+				EValidationRules.Positive,
+			],
+		};
+	}
+}
+
+function Min(_value: number) {
+	if (_value < 0) {
+		throw new Error('Should be greater than 0');
+	}
+	return (target: any, propertyName: string) => {
+		const _className = target.constructor.name; // this is simple javascript as all objects (created from a class print) have a constructor function and also have a "name" property which is the name of the class it self.
+
+		if (_className) {
+			// first check if the "registeredValidationRules" object have a entry for this className already or not, if not, then initialized that using a empty object
+			if (!registeredValidationRules[_className]) {
+				registeredValidationRules[_className] = {};
+			}
+
+			// now check if the "registeredValidationRules[_className]" object have a entry for this propertyName already or not, if not, then initialized that using a empty array
+			if (
+				!registeredValidationRules[_className][propertyName] ||
+				!registeredValidationRules[_className][propertyName].length
+			) {
+				registeredValidationRules[_className][propertyName] = [];
+			}
+
+			const minValue = EValidationRules.Min.replace(
+				dynamicPartToReplace,
+				_value.toString()
+			);
+
+			// now add the validation rule needed for this validator decorator and keep the already applied rules for the field
+			registeredValidationRules[_className] = {
+				...registeredValidationRules[_className],
+				[propertyName]: [
+					...registeredValidationRules[_className][propertyName],
+					minValue,
+				],
+			};
+		}
+	};
+}
+
+function Max(_value: number) {
+	if (_value < 0) {
+		throw new Error('Should be greater than 0');
+	}
+	return (target: any, propertyName: string) => {
+		const _className = target.constructor.name; // this is simple javascript as all objects (created from a class print) have a constructor function and also have a "name" property which is the name of the class it self.
+
+		if (_className) {
+			// first check if the "registeredValidationRules" object have a entry for this className already or not, if not, then initialized that using a empty object
+			if (!registeredValidationRules[_className]) {
+				registeredValidationRules[_className] = {};
+			}
+
+			// now check if the "registeredValidationRules[_className]" object have a entry for this propertyName already or not, if not, then initialized that using a empty array
+			if (
+				!registeredValidationRules[_className][propertyName] ||
+				!registeredValidationRules[_className][propertyName].length
+			) {
+				registeredValidationRules[_className][propertyName] = [];
+			}
+
+			const maxValue = EValidationRules.Max.replace(
+				dynamicPartToReplace,
+				_value.toString()
+			);
+
+			// now add the validation rule needed for this validator decorator and keep the already applied rules for the field
+			registeredValidationRules[_className] = {
+				...registeredValidationRules[_className],
+				[propertyName]: [
+					...registeredValidationRules[_className][propertyName],
+					maxValue,
+				],
+			};
+		}
+	};
+}
+
+class Course {
+	@MaxLength(100)
+	@MinLength(10)
+	@isRequired
+	title: string;
+
+	@Max(10000)
+	@Min(5)
+	@Positive
+	price: number;
+
+	constructor(_title: string, _price: number) {
+		this.title = _title;
+		this.price = _price;
+	}
+}
+
+// if it returns "true" that means all properties have valid value, otherwise invalid value "false"
+const validateClassPropertiesBasedObAppliedValidationDecorators = (
+	classObj: any
+): boolean => {
+	const _className = classObj.constructor.name; // same as defined before, every class object in javascript have a constructor object and also a name property which is the name of the class
+
+	if (_className) {
+		const _classValidationRules = registeredValidationRules[_className];
+
+		if (_classValidationRules && Object.keys(_classValidationRules).length) {
+			let _allPropertiesAreValid = true;
+			for (const _propertyName in _classValidationRules) {
+				if (
+					Object.prototype.hasOwnProperty.call(
+						_classValidationRules,
+						_propertyName
+					) &&
+					_classValidationRules[_propertyName].length
+				) {
+					const _propertyValidationRulesStrArr =
+						_classValidationRules[_propertyName];
+					_propertyValidationRulesStrArr.forEach((_validationRule) => {
+						// EValidationRules.Required
+						if (_validationRule.includes(EValidationRules.Required)) {
+							_allPropertiesAreValid =
+								_allPropertiesAreValid && !!classObj[_propertyName];
+						}
+
+						// EValidationRules.Positive
+						else if (_validationRule.includes(EValidationRules.Positive)) {
+							_allPropertiesAreValid =
+								_allPropertiesAreValid && classObj[_propertyName] > 0;
+						}
+
+						// EValidationRules.MinLength
+						else if (
+							_validationRule.includes(
+								EValidationRules.MinLength.replace(dynamicPartToReplace, '')
+							)
+						) {
+							_allPropertiesAreValid =
+								_allPropertiesAreValid &&
+								(classObj[_propertyName] as string).length >=
+									parseInt(_validationRule.split(dynamicPartSeparator)[1]);
+						}
+
+						// EValidationRules.MaxLength
+						else if (
+							_validationRule.includes(
+								EValidationRules.MaxLength.replace(dynamicPartToReplace, '')
+							)
+						) {
+							_allPropertiesAreValid =
+								_allPropertiesAreValid &&
+								(classObj[_propertyName] as string).length <=
+									parseInt(_validationRule.split(dynamicPartSeparator)[1]);
+						}
+
+						// EValidationRules.Min
+						else if (
+							_validationRule.includes(
+								EValidationRules.Min.replace(dynamicPartToReplace, '')
+							)
+						) {
+							_allPropertiesAreValid =
+								_allPropertiesAreValid &&
+								parseInt(classObj[_propertyName]) >=
+									parseInt(_validationRule.split(dynamicPartSeparator)[1]);
+							console.log({
+								message:
+									'i checked for property validation rule [EValidationRules.Min] for this property with these values',
+								_allPropertiesAreValid,
+								_propertyName,
+								propertyValue: parseInt(classObj[_propertyName]),
+								minValueRequestedByRule: parseInt(
+									_validationRule.split(dynamicPartSeparator)[1]
+								),
+							});
+						}
+
+						// EValidationRules.Max
+						else if (
+							_validationRule.includes(
+								EValidationRules.Max.replace(dynamicPartToReplace, '')
+							)
+						) {
+							_allPropertiesAreValid =
+								_allPropertiesAreValid &&
+								parseInt(classObj[_propertyName]) <=
+									parseInt(_validationRule.split(dynamicPartSeparator)[1]);
+						}
+					});
+				}
+			}
+
+			return _allPropertiesAreValid;
+		} else {
+			return true;
+		}
+	} else {
+		return true;
+	}
 };
 
-class Printer {
-	message = 'okay :)';
+console.log({ registeredValidationRules });
 
-	showMessage() {
-		// this will show "undefined" when i will class it using "addEventListener" on a button, as the "this" keyword will refer to the "addEventListener" and not the "this class" it self
-		console.log({ message: this.message });
-	}
+const _courseForm = document.querySelector('form');
 
-	@AdjustThisBinding
-	showMessageAdjustedWithDecorator() {
-		console.log({ message: this.message });
-	}
-}
+if (_courseForm) {
+	_courseForm.addEventListener('submit', (event) => {
+		event.preventDefault();
 
-const _printerObj = new Printer();
+		const _courseTitleEl = document.querySelector(
+			'input#title'
+		) as HTMLInputElement;
+		const _coursePriceEl = document.querySelector(
+			'input#price'
+		) as HTMLInputElement;
 
-const __button1 = document.querySelector('button.btn1');
-const __button2 = document.querySelector('button.btn2');
+		if (_courseTitleEl && _coursePriceEl) {
+			const _courseTitle = _courseTitleEl.value;
+			const _coursePrice = +_coursePriceEl.value;
 
-if (__button1) {
-	__button1.addEventListener('click', _printerObj.showMessage);
-}
-if (__button2) {
-	__button2.addEventListener(
-		'click',
-		_printerObj.showMessageAdjustedWithDecorator
-	);
+			const _newCourseObj = new Course(_courseTitle, _coursePrice);
+
+			if (
+				!validateClassPropertiesBasedObAppliedValidationDecorators(
+					_newCourseObj
+				)
+			) {
+				console.error({ message: 'Invalid course', _newCourseObj });
+			} else {
+				console.info({ message: 'Valid course', _newCourseObj });
+			}
+		} else {
+			alert(
+				'No input field found with id "title" or "price", can not continue.'
+			);
+		}
+	});
 }
