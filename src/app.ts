@@ -37,7 +37,7 @@ const validateField = (_input: IValidatable) => {
 		_fieldIsValid = false;
 	}
 
-	return false;
+	return _fieldIsValid;
 };
 
 // --------------------------------------------------------------------------------------------
@@ -77,11 +77,15 @@ class ProjectInput {
 	}
 
 	private gatherUserInput(): [string, string, number] | void {
-		const _title = this.titleInputEl?.value;
-		const _description = this.descriptionInputEl?.value;
-		const _people = this.peopleInputEl?.value;
+		const _title = this.titleInputEl?.value!;
+		const _description = this.descriptionInputEl?.value!;
+		const _people = this.peopleInputEl?.value!;
 
-		if (_title && _description && _people && +_people > 0) {
+		if (
+			validateField({ value: _title, required: true }) &&
+			validateField({ value: _description, required: true }) &&
+			validateField({ value: _people, required: true, positive: true })
+		) {
 			return [_title, _description, +_people];
 		} else {
 			alert('Invalid user input');
