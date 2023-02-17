@@ -41,29 +41,146 @@ const validateField = (_input: IValidatable) => {
 };
 
 // --------------------------------------------------------------------------------------------
-// ------------------------------------------ CLASSES -----------------------------------------
+// ----------------------------------- Project State Class ------------------------------------
 // --------------------------------------------------------------------------------------------
-class ProjectInput {
+enum EProjectType {
+	active = 'active',
+	finished = 'finished',
+}
+interface IProject {
+	id: string;
+	title: string;
+	description: string;
+	people: number;
+	type: EProjectType;
+	createdAt: Date;
+	updatedAt: Date;
+}
+type IListenerFunc<T> = (projects: T[]) => void;
+type IListener<T> = {
+	listType: EProjectType;
+	listenerFunc: IListenerFunc<T>;
+};
+
+class State<T> {
+	protected listeners: IListener<T>[] = [];
+	constructor() {}
+
+	addListener(listType: EProjectType, listenerFunc: IListenerFunc<T>) {
+		this.listeners.push({ listType, listenerFunc });
+	}
+}
+
+class ProjectState extends State<IProject> {
+	private static instance: ProjectState;
+	private projects: IProject[] = [];
+	constructor() {
+		super();
+	}
+
+	static getInstance() {
+		if (!this.instance) {
+			this.instance = new ProjectState();
+			return this.instance;
+		} else {
+			return this.instance;
+		}
+	}
+
+	addProject(data: IProject) {
+		this.projects.push(data);
+		const _activeProjects = this.projects.filter(
+			(el) => el.type === EProjectType.active
+		);
+		const _finishedProjects = this.projects.filter(
+			(el) => el.type === EProjectType.finished
+		);
+
+		if (this.listeners.length) {
+			for (let i = 0; i < this.listeners.length; i++) {
+				const _listener = this.listeners[i];
+				_listener.listenerFunc(
+					_listener.listType === EProjectType.active
+						? _activeProjects.slice()
+						: _listener.listType === EProjectType.finished
+						? _finishedProjects.slice()
+						: []
+				);
+			}
+		}
+	}
+}
+
+const projectState = ProjectState.getInstance();
+
+// --------------------------------------------------------------------------------------------
+// ------------------------------------- Components CLASSES -----------------------------------
+// --------------------------------------------------------------------------------------------
+abstract class Component<T extends HTMLElement, U extends HTMLElement> {
 	templateEl: HTMLTemplateElement | undefined;
-	appDivEl: HTMLDivElement | undefined;
-	projectInputFormEl: HTMLFormElement | undefined;
+	hostEl: T | undefined;
+	componentEl: U | undefined;
+
+	constructor(
+		templateId: string,
+		hostId: string,
+		insertAtStart: boolean,
+		componentElId?: string
+	) {
+		// select template and main app div element
+		this.templateEl = document.getElementById(
+			templateId
+		)! as HTMLTemplateElement;
+		this.hostEl = document.getElementById(hostId)! as T;
+
+		// get access to the form element inside the template element
+		const _templateImportedNode = document.importNode(
+			this.templateEl.content,
+			true
+		);
+
+		this.componentEl = _templateImportedNode.firstElementChild! as U;
+
+		if (componentElId) {
+			this.componentEl.id = 'user-input';
+		}
+
+		// now attach elements to dom
+		this.attach(insertAtStart);
+	}
+
+	private attach(insertAtStart: boolean) {
+		if (this.hostEl && this.componentEl) {
+			this.hostEl.insertAdjacentElement(
+				insertAtStart ? 'afterbegin' : 'beforeend',
+				this.componentEl
+			);
+		} else {
+			throw new Error(
+				'Can not find either app div or form element in html file, please check.'
+			);
+		}
+	}
+
+	abstract configure(): void;
+}
+
+class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
 	titleInputEl: HTMLInputElement | undefined;
 	descriptionInputEl: HTMLInputElement | undefined;
 	peopleInputEl: HTMLInputElement | undefined;
 
-	constructor(_appDivElId: string, _projectInputTemplateElId: string) {
+	constructor(templateId: string, hostId: string) {
+		super(templateId, hostId, true, 'user-input');
 		// first select all dom elements and store their reference in class properties
-		this.selectDomElements(_appDivElId, _projectInputTemplateElId);
+		this.configure();
 
 		// now add the event handlers to form and input fields
 		this.addEventHandlersToElements();
-
-		// now attach elements to dom
-		this.attachProjectInputFormToDom();
 	}
 
 	private addEventHandlersToElements() {
-		this.projectInputFormEl?.addEventListener('submit', this.formSubmitHandler);
+		this.componentEl?.addEventListener('submit', this.formSubmitHandler);
 	}
 
 	@AutoBindThisKeyword
@@ -71,9 +188,21 @@ class ProjectInput {
 		event.preventDefault();
 
 		const _userInput = this.gatherUserInput();
-		console.log({ _userInput });
+		if (_userInput) {
+			const _projectData: IProject = {
+				id: Math.random().toString(),
+				title: _userInput[0],
+				description: _userInput[1],
+				people: _userInput[2],
+				type: EProjectType.active,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
 
-		this.clearFormInputFields();
+			projectState.addProject(_projectData);
+
+			this.clearFormInputFields();
+		}
 	}
 
 	private gatherUserInput(): [string, string, number] | void {
@@ -100,106 +229,69 @@ class ProjectInput {
 		}
 	}
 
-	private selectDomElements(
-		_appDivElId: string,
-		_projectInputTemplateElId: string
-	) {
-		// select template and main app div element
-		this.templateEl = document.getElementById(
-			_projectInputTemplateElId
-		)! as HTMLTemplateElement;
-		this.appDivEl = document.getElementById(_appDivElId)! as HTMLDivElement;
-
-		// get access to the form element inside the template element
-		const _templateImportedNode = document.importNode(
-			this.templateEl.content,
-			true
-		);
-
-		this.projectInputFormEl =
-			_templateImportedNode.firstElementChild! as HTMLFormElement;
-
-		// this.projectInputFormEl.setAttribute('id', 'user-input');
-		this.projectInputFormEl.id = 'user-input';
-
-		// select input elements inside the form element
-		this.titleInputEl = this.projectInputFormEl.querySelector(
-			'#title'
-		)! as HTMLInputElement;
-		this.descriptionInputEl = this.projectInputFormEl.querySelector(
-			'#description'
-		)! as HTMLInputElement;
-		this.peopleInputEl = this.projectInputFormEl.querySelector(
-			'#people'
-		)! as HTMLInputElement;
-	}
-
-	private attachProjectInputFormToDom() {
-		if (this.appDivEl && this.projectInputFormEl) {
-			this.appDivEl.insertAdjacentElement('beforeend', this.projectInputFormEl);
-		} else {
-			throw new Error(
-				'Can not find either app div or form element in html file, please check.'
-			);
+	configure() {
+		if (this.componentEl) {
+			// select input elements inside the form element
+			this.titleInputEl = this.componentEl.querySelector(
+				'#title'
+			)! as HTMLInputElement;
+			this.descriptionInputEl = this.componentEl.querySelector(
+				'#description'
+			)! as HTMLInputElement;
+			this.peopleInputEl = this.componentEl.querySelector(
+				'#people'
+			)! as HTMLInputElement;
 		}
 	}
 }
 
-class ProjectList {
-	templateEl: HTMLTemplateElement | undefined;
-	appDivEl: HTMLDivElement | undefined;
-	projectListEl: HTMLElement | undefined;
+class ProjectList extends Component<HTMLDivElement, HTMLElement> {
+	assignedProjects: IProject[] = [];
 
 	constructor(
-		_appDivElId: string,
-		_projectListTemplateElId: string,
-		public projectListType: 'active' | 'finished'
+		hostId: string,
+		templateId: string,
+		public projectListType: EProjectType
 	) {
+		super(templateId, hostId, false, `${projectListType}-projects`);
 		// first select all dom elements and store their reference in class properties
-		this.selectDomElements(_appDivElId, _projectListTemplateElId);
+		this.configure();
 
-		// now attach elements to dom
-		this.attachProjectInputFormToDom();
-	}
+		// setup a listener for new projects
+		projectState.addListener(
+			this.projectListType,
+			(projectsData: IProject[]) => {
+				this.assignedProjects = projectsData;
 
-	private selectDomElements(
-		_appDivElId: string,
-		_projectListTemplateElId: string
-	) {
-		// select template and main app div element
-		this.templateEl = document.getElementById(
-			_projectListTemplateElId
-		)! as HTMLTemplateElement;
-		this.appDivEl = document.getElementById(_appDivElId)! as HTMLDivElement;
-
-		// get access to the form element inside the template element
-		const _templateImportedNode = document.importNode(
-			this.templateEl.content,
-			true
+				this.renderProjectsItems();
+			}
 		);
-
-		this.projectListEl =
-			_templateImportedNode.firstElementChild! as HTMLElement;
-
-		// this.projectInputFormEl.setAttribute('id', 'user-input');
-		this.projectListEl.id = `${this.projectListType}-projects`;
-
-		this.projectListEl.querySelector(
-			'h2'
-		)!.innerHTML = `${this.projectListType.toUpperCase()} PROJECTS`;
-
-		this.projectListEl.querySelector(
-			'ul'
-		)!.id = `${this.projectListType}-projects-list`;
 	}
 
-	private attachProjectInputFormToDom() {
-		if (this.appDivEl && this.projectListEl) {
-			this.appDivEl.insertAdjacentElement('beforeend', this.projectListEl);
-		} else {
-			throw new Error(
-				'Can not find either app div or project list element in html file, please check.'
-			);
+	configure() {
+		if (this.componentEl) {
+			this.componentEl.querySelector(
+				'h2'
+			)!.innerHTML = `${this.projectListType.toUpperCase()} PROJECTS`;
+
+			this.componentEl.querySelector(
+				'ul'
+			)!.id = `${this.projectListType}-projects-list`;
+		}
+	}
+
+	private renderProjectsItems() {
+		const _uListEl = document.getElementById(
+			`${this.projectListType}-projects-list`
+		);
+		if (this.assignedProjects.length && _uListEl) {
+			_uListEl.innerHTML = '';
+			for (let i = 0; i < this.assignedProjects.length; i++) {
+				const project = this.assignedProjects[i];
+				const listItem = document.createElement('li');
+				listItem.innerText = project.title;
+				_uListEl.appendChild(listItem);
+			}
 		}
 	}
 }
@@ -207,6 +299,14 @@ class ProjectList {
 // --------------------------------------------------------------------------------------------
 // ------------------------------------------ OBJECTS -----------------------------------------
 // --------------------------------------------------------------------------------------------
-const projectInput = new ProjectInput('app', 'project-input');
-const activeProjectList = new ProjectList('app', 'project-list', 'active');
-const finishedProjectList = new ProjectList('app', 'project-list', 'finished');
+const projectInput = new ProjectInput('project-input', 'app');
+const activeProjectList = new ProjectList(
+	'project-list',
+	'app',
+	EProjectType.active
+);
+const finishedProjectList = new ProjectList(
+	'project-list',
+	'app',
+	EProjectType.finished
+);
