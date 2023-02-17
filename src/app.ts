@@ -142,7 +142,7 @@ abstract class Component<T extends HTMLElement, U extends HTMLElement> {
 		this.componentEl = _templateImportedNode.firstElementChild! as U;
 
 		if (componentElId) {
-			this.componentEl.id = 'user-input';
+			this.componentEl.id = componentElId;
 		}
 
 		// now attach elements to dom
@@ -249,8 +249,8 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
 	assignedProjects: IProject[] = [];
 
 	constructor(
-		hostId: string,
 		templateId: string,
+		hostId: string,
 		public projectListType: EProjectType
 	) {
 		super(templateId, hostId, false, `${projectListType}-projects`);
