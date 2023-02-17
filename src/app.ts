@@ -136,10 +136,7 @@ class ProjectInput {
 
 	private attachProjectInputFormToDom() {
 		if (this.appDivEl && this.projectInputFormEl) {
-			this.appDivEl.insertAdjacentElement(
-				'afterbegin',
-				this.projectInputFormEl
-			);
+			this.appDivEl.insertAdjacentElement('beforeend', this.projectInputFormEl);
 		} else {
 			throw new Error(
 				'Can not find either app div or form element in html file, please check.'
@@ -149,10 +146,67 @@ class ProjectInput {
 }
 
 class ProjectList {
-	constructor(public type: 'Active' | 'Finished') {}
+	templateEl: HTMLTemplateElement | undefined;
+	appDivEl: HTMLDivElement | undefined;
+	projectListEl: HTMLElement | undefined;
+
+	constructor(
+		_appDivElId: string,
+		_projectListTemplateElId: string,
+		public projectListType: 'active' | 'finished'
+	) {
+		// first select all dom elements and store their reference in class properties
+		this.selectDomElements(_appDivElId, _projectListTemplateElId);
+
+		// now attach elements to dom
+		this.attachProjectInputFormToDom();
+	}
+
+	private selectDomElements(
+		_appDivElId: string,
+		_projectListTemplateElId: string
+	) {
+		// select template and main app div element
+		this.templateEl = document.getElementById(
+			_projectListTemplateElId
+		)! as HTMLTemplateElement;
+		this.appDivEl = document.getElementById(_appDivElId)! as HTMLDivElement;
+
+		// get access to the form element inside the template element
+		const _templateImportedNode = document.importNode(
+			this.templateEl.content,
+			true
+		);
+
+		this.projectListEl =
+			_templateImportedNode.firstElementChild! as HTMLElement;
+
+		// this.projectInputFormEl.setAttribute('id', 'user-input');
+		this.projectListEl.id = `${this.projectListType}-projects`;
+
+		this.projectListEl.querySelector(
+			'h2'
+		)!.innerHTML = `${this.projectListType.toUpperCase()} PROJECTS`;
+
+		this.projectListEl.querySelector(
+			'ul'
+		)!.id = `${this.projectListType}-projects-list`;
+	}
+
+	private attachProjectInputFormToDom() {
+		if (this.appDivEl && this.projectListEl) {
+			this.appDivEl.insertAdjacentElement('beforeend', this.projectListEl);
+		} else {
+			throw new Error(
+				'Can not find either app div or project list element in html file, please check.'
+			);
+		}
+	}
 }
 
 // --------------------------------------------------------------------------------------------
 // ------------------------------------------ OBJECTS -----------------------------------------
 // --------------------------------------------------------------------------------------------
 const projectInput = new ProjectInput('app', 'project-input');
+const activeProjectList = new ProjectList('app', 'project-list', 'active');
+const finishedProjectList = new ProjectList('app', 'project-list', 'finished');
