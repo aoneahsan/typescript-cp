@@ -43,7 +43,7 @@ const validateField = (_input: IValidatable) => {
 // --------------------------------------------------------------------------------------------
 // ----------------------------------- Project State Class ------------------------------------
 // --------------------------------------------------------------------------------------------
-enum EProjectType {
+enum EProjectStatus {
 	active = 'active',
 	finished = 'finished',
 }
@@ -52,13 +52,13 @@ interface IProject {
 	title: string;
 	description: string;
 	people: number;
-	type: EProjectType;
+	status: EProjectStatus;
 	createdAt: Date;
 	updatedAt: Date;
 }
 type IListenerFunc<T> = (projects: T[]) => void;
 type IListener<T> = {
-	listType: EProjectType;
+	listType: EProjectStatus;
 	listenerFunc: IListenerFunc<T>;
 };
 
@@ -66,7 +66,7 @@ class State<T> {
 	protected listeners: IListener<T>[] = [];
 	constructor() {}
 
-	addListener(listType: EProjectType, listenerFunc: IListenerFunc<T>) {
+	addListener(listType: EProjectStatus, listenerFunc: IListenerFunc<T>) {
 		this.listeners.push({ listType, listenerFunc });
 	}
 }
@@ -89,20 +89,49 @@ class ProjectState extends State<IProject> {
 
 	addProject(data: IProject) {
 		this.projects.push(data);
-		const _activeProjects = this.projects.filter(
-			(el) => el.type === EProjectType.active
-		);
-		const _finishedProjects = this.projects.filter(
-			(el) => el.type === EProjectType.finished
-		);
 
+		this.updateProjectsListUI();
+	}
+
+	projectExists(projectId: string) {
+		if (projectId) {
+			return this.projects.findIndex((el) => el.id === projectId) > -1;
+		} else return false;
+	}
+
+	updateProjectStatus(projectId: string, newStatus: EProjectStatus) {
+		if (this.projectExists(projectId)) {
+			const _project = this.projects.find((el) => el.id === projectId);
+			if (_project!.status !== newStatus) {
+				this.projects = this.projects.map((el) => {
+					if (el.id === projectId) {
+						return {
+							...el,
+							status: newStatus,
+						};
+					} else return el;
+				});
+
+				this.updateProjectsListUI();
+			}
+		}
+	}
+
+	private updateProjectsListUI() {
 		if (this.listeners.length) {
+			const _activeProjects = this.projects.filter(
+				(el) => el.status === EProjectStatus.active
+			);
+			const _finishedProjects = this.projects.filter(
+				(el) => el.status === EProjectStatus.finished
+			);
+
 			for (let i = 0; i < this.listeners.length; i++) {
 				const _listener = this.listeners[i];
 				_listener.listenerFunc(
-					_listener.listType === EProjectType.active
+					_listener.listType === EProjectStatus.active
 						? _activeProjects.slice()
-						: _listener.listType === EProjectType.finished
+						: _listener.listType === EProjectStatus.finished
 						? _finishedProjects.slice()
 						: []
 				);
@@ -112,6 +141,20 @@ class ProjectState extends State<IProject> {
 }
 
 const projectState = ProjectState.getInstance();
+
+// --------------------------------------------------------------------------------------------
+// ------------------------------------- Drab & Drop Logic ------------------------------------
+// --------------------------------------------------------------------------------------------
+interface IDraggable {
+	dragStartHandler(event: DragEvent): void;
+	dragEndHandler(event: DragEvent): void;
+}
+
+interface IDropable {
+	dragOverHandler(event: DragEvent): void;
+	dragLeaveHandler(event: DragEvent): void;
+	dropHandler(event: DragEvent): void;
+}
 
 // --------------------------------------------------------------------------------------------
 // ------------------------------------- Components CLASSES -----------------------------------
@@ -194,7 +237,7 @@ class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
 				title: _userInput[0],
 				description: _userInput[1],
 				people: _userInput[2],
-				type: EProjectType.active,
+				status: EProjectStatus.active,
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			};
@@ -245,18 +288,46 @@ class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
 	}
 }
 
-class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> {
+class ProjectItem
+	extends Component<HTMLUListElement, HTMLLIElement>
+	implements IDraggable
+{
 	projectTitleEl: HTMLHeadingElement | undefined;
 	projectPeopleCountEl: HTMLHeadingElement | undefined;
 	projectDescriptionEl: HTMLParagraphElement | undefined;
+
+	get peopleCount() {
+		return `${this.project.people} Person${
+			this.project.people > 1 ? 's' : ''
+		} Assigned.`;
+	}
+
 	constructor(templateId: string, hostId: string, private project: IProject) {
 		super(templateId, hostId, false, project.id);
 
 		this.configure();
 	}
 
+	@AutoBindThisKeyword
+	dragStartHandler(event: DragEvent): void {
+		if (event.dataTransfer) {
+			event.dataTransfer.setData('text/plain', this.project.id);
+			event.dataTransfer.effectAllowed = 'move';
+		}
+	}
+
+	@AutoBindThisKeyword
+	dragEndHandler(event: DragEvent): void {
+		console.log({ eventName: 'dragEndHandler', event });
+	}
+
 	configure(): void {
 		if (this.componentEl) {
+			// add event listeners
+			this.componentEl.addEventListener('dragstart', this.dragStartHandler);
+			this.componentEl.addEventListener('dragend', this.dragEndHandler);
+
+			// add other configuration logic
 			this.projectTitleEl = this.componentEl.querySelector(
 				'h2'
 			)! as HTMLHeadingElement;
@@ -267,24 +338,36 @@ class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> {
 				'p'
 			)! as HTMLParagraphElement;
 			this.projectTitleEl.innerText = this.project.title;
-			this.projectPeopleCountEl.innerText = this.getPeopleCount(this.project);
+			const random = parseInt((Math.random() * 11).toString());
+			if (random > 5) {
+				// example using function
+				this.projectPeopleCountEl.innerText = this.getPeopleCount();
+			} else {
+				// example using getter
+				this.projectPeopleCountEl.innerText = this.peopleCount;
+			}
+
 			this.projectDescriptionEl.innerText = this.project.description;
 		}
 	}
 
-	getPeopleCount(project: IProject): string {
-		return `No of people: ${project.people}`;
+	// instead of this we can also use a getter property.
+	getPeopleCount(): string {
+		return `No of people: ${this.project.people}`;
 	}
 }
 
-class ProjectList extends Component<HTMLDivElement, HTMLElement> {
+class ProjectList
+	extends Component<HTMLDivElement, HTMLElement>
+	implements IDropable
+{
 	assignedProjects: IProject[] = [];
 	listUlEl: HTMLUListElement | undefined;
 
 	constructor(
 		templateId: string,
 		hostId: string,
-		public projectListType: EProjectType
+		public projectListType: EProjectStatus
 	) {
 		super(templateId, hostId, false, `${projectListType}-projects`);
 		// first select all dom elements and store their reference in class properties
@@ -301,8 +384,35 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
 		);
 	}
 
+	@AutoBindThisKeyword
+	dragOverHandler(event: DragEvent): void {
+		event.preventDefault();
+		this.updateDroppableClass(true);
+	}
+
+	@AutoBindThisKeyword
+	dragLeaveHandler(_: DragEvent): void {
+		this.updateDroppableClass(false);
+	}
+
+	@AutoBindThisKeyword
+	dropHandler(event: DragEvent): void {
+		if (event.dataTransfer) {
+			const projectId = event.dataTransfer.getData('text/plain');
+
+			this.updateTheProjectItemStatus(projectId);
+			this.updateDroppableClass(false);
+		}
+	}
+
 	configure() {
 		if (this.componentEl) {
+			// add event listeners
+			this.componentEl.addEventListener('dragover', this.dragOverHandler);
+			this.componentEl.addEventListener('dragleave', this.dragLeaveHandler);
+			this.componentEl.addEventListener('drop', this.dropHandler);
+
+			// add other configuration logic
 			this.componentEl.querySelector(
 				'h2'
 			)!.innerHTML = `${this.projectListType.toUpperCase()} PROJECTS`;
@@ -316,7 +426,7 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
 		const _uListEl = document.getElementById(
 			`${this.projectListType}-projects-list`
 		);
-		if (this.assignedProjects.length && _uListEl && this.listUlEl) {
+		if (_uListEl && this.listUlEl) {
 			_uListEl.innerHTML = '';
 			for (let i = 0; i < this.assignedProjects.length; i++) {
 				new ProjectItem(
@@ -331,6 +441,21 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
 			}
 		}
 	}
+
+	private updateTheProjectItemStatus(projectId: string) {
+		if (projectState.projectExists(projectId)) {
+			projectState.updateProjectStatus(projectId, this.projectListType);
+		}
+	}
+
+	private updateDroppableClass(insert: boolean) {
+		const ulListEl = this.componentEl?.querySelector('ul')!;
+		if (insert) {
+			ulListEl.classList.add('droppable');
+		} else {
+			ulListEl.classList.remove('droppable');
+		}
+	}
 }
 
 // --------------------------------------------------------------------------------------------
@@ -340,10 +465,10 @@ const projectInput = new ProjectInput('project-input', 'app');
 const activeProjectList = new ProjectList(
 	'project-list',
 	'app',
-	EProjectType.active
+	EProjectStatus.active
 );
 const finishedProjectList = new ProjectList(
 	'project-list',
 	'app',
-	EProjectType.finished
+	EProjectStatus.finished
 );
