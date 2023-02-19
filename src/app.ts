@@ -246,16 +246,40 @@ class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
 }
 
 class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> {
-	private project: IProject;
-	constructor(templateId: string, hostId: string, project: IProject) {
+	projectTitleEl: HTMLHeadingElement | undefined;
+	projectPeopleCountEl: HTMLHeadingElement | undefined;
+	projectDescriptionEl: HTMLParagraphElement | undefined;
+	constructor(templateId: string, hostId: string, private project: IProject) {
 		super(templateId, hostId, false, project.id);
+
+		this.configure();
 	}
 
-	configure(): void {}
+	configure(): void {
+		if (this.componentEl) {
+			this.projectTitleEl = this.componentEl.querySelector(
+				'h2'
+			)! as HTMLHeadingElement;
+			this.projectPeopleCountEl = this.componentEl.querySelector(
+				'h3'
+			)! as HTMLHeadingElement;
+			this.projectDescriptionEl = this.componentEl.querySelector(
+				'p'
+			)! as HTMLParagraphElement;
+			this.projectTitleEl.innerText = this.project.title;
+			this.projectPeopleCountEl.innerText = this.getPeopleCount(this.project);
+			this.projectDescriptionEl.innerText = this.project.description;
+		}
+	}
+
+	getPeopleCount(project: IProject): string {
+		return `No of people: ${project.people}`;
+	}
 }
 
 class ProjectList extends Component<HTMLDivElement, HTMLElement> {
 	assignedProjects: IProject[] = [];
+	listUlEl: HTMLUListElement | undefined;
 
 	constructor(
 		templateId: string,
@@ -283,9 +307,8 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
 				'h2'
 			)!.innerHTML = `${this.projectListType.toUpperCase()} PROJECTS`;
 
-			this.componentEl.querySelector(
-				'ul'
-			)!.id = `${this.projectListType}-projects-list`;
+			this.listUlEl = this.componentEl.querySelector('ul')!;
+			this.listUlEl.id = `${this.projectListType}-projects-list`;
 		}
 	}
 
@@ -293,13 +316,18 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
 		const _uListEl = document.getElementById(
 			`${this.projectListType}-projects-list`
 		);
-		if (this.assignedProjects.length && _uListEl) {
+		if (this.assignedProjects.length && _uListEl && this.listUlEl) {
 			_uListEl.innerHTML = '';
 			for (let i = 0; i < this.assignedProjects.length; i++) {
-				const project = this.assignedProjects[i];
-				const listItem = document.createElement('li');
-				listItem.innerText = project.title;
-				_uListEl.appendChild(listItem);
+				new ProjectItem(
+					'single-project',
+					this.listUlEl.id,
+					this.assignedProjects[i]
+				);
+				// const project = this.assignedProjects[i];
+				// const listItem = document.createElement('li');
+				// listItem.innerText = project.title;
+				// _uListEl.appendChild(listItem);
 			}
 		}
 	}
