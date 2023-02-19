@@ -1,0 +1,31 @@
+{
+	"name": "typescript-cp",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"watch": "tsc --watch",
+		"start": "nodemon dist/app.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/aoneahsan/typescript-cp.git"
+	},
+	"author": "",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/aoneahsan/typescript-cp/issues"
+	},
+	"homepage": "https://github.com/aoneahsan/typescript-cp#readme",
+	"dependencies": {
+		"body-parser": "^1.20.1",
+		"express": "^4.18.2"
+	},
+	"devDependencies": {
+		"@types/express": "^4.17.17",
+		"@types/node": "^18.14.0",
+		"nodemon": "^2.0.20",
+		"typescript": "^4.9.5"
+	}
+}
