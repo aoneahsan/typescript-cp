@@ -1,9 +1,9 @@
-import { AutoBindThisKeyword } from '../decorators/autobind.js';
-import { IDropable, IProject } from '../interfaces/interfaces.js';
-import { projectState } from '../state/project.js';
-import { EProjectStatus } from '../utils/enums.js';
-import { Component } from './base-component.js';
-import { ProjectItem } from './project-item.js';
+import { AutoBindThisKeyword } from '../decorators/autobind';
+import { IDropable, IProject } from '../interfaces/interfaces';
+import { projectState } from '../state/project';
+import { EProjectStatus } from '../utils/enums';
+import { Component } from './base-component';
+import { ProjectItem } from './project-item';
 
 export class ProjectList
 	extends Component<HTMLDivElement, HTMLElement>

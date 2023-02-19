@@ -2,7 +2,7 @@
 // ---------------------------------------- VALIDATIONS ---------------------------------------
 // --------------------------------------------------------------------------------------------
 
-import { IValidatable } from '../interfaces/interfaces.js';
+import { IValidatable } from '../interfaces/interfaces';
 
 export const validateField = (_input: IValidatable) => {
 	let _fieldIsValid = true;

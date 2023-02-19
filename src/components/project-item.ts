@@ -1,6 +1,6 @@
-import { AutoBindThisKeyword } from '../decorators/autobind.js';
-import { IDraggable, IProject } from '../interfaces/interfaces.js';
-import { Component } from './base-component.js';
+import { AutoBindThisKeyword } from '../decorators/autobind';
+import { IDraggable, IProject } from '../interfaces/interfaces';
+import { Component } from './base-component';
 
 export class ProjectItem
 	extends Component<HTMLUListElement, HTMLLIElement>

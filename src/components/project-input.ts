@@ -1,9 +1,9 @@
-import { AutoBindThisKeyword } from '../decorators/autobind.js';
-import { IProject } from '../interfaces/interfaces.js';
-import { projectState } from '../state/project.js';
-import { EProjectStatus } from '../utils/enums.js';
-import { validateField } from '../utils/validation.js';
-import { Component } from './base-component.js';
+import { AutoBindThisKeyword } from '../decorators/autobind';
+import { IProject } from '../interfaces/interfaces';
+import { projectState } from '../state/project';
+import { EProjectStatus } from '../utils/enums';
+import { validateField } from '../utils/validation';
+import { Component } from './base-component';
 
 export class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
 	titleInputEl: HTMLInputElement | undefined;

@@ -1,4 +1,4 @@
-import { EProjectStatus } from '../utils/enums.js';
+import { EProjectStatus } from '../utils/enums';
 
 export interface IValidatable {
 	value: string | number;

@@ -2,12 +2,8 @@
 // ----------------------------------- Project State Class ------------------------------------
 // --------------------------------------------------------------------------------------------
 
-import {
-	IListener,
-	IListenerFunc,
-	IProject,
-} from '../interfaces/interfaces.js';
-import { EProjectStatus } from '../utils/enums.js';
+import { IListener, IListenerFunc, IProject } from '../interfaces/interfaces';
+import { EProjectStatus } from '../utils/enums';
 
 class State<T> {
 	protected listeners: IListener<T>[] = [];
