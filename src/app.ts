@@ -245,6 +245,15 @@ class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
 	}
 }
 
+class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> {
+	private project: IProject;
+	constructor(templateId: string, hostId: string, project: IProject) {
+		super(templateId, hostId, false, project.id);
+	}
+
+	configure(): void {}
+}
+
 class ProjectList extends Component<HTMLDivElement, HTMLElement> {
 	assignedProjects: IProject[] = [];
 
