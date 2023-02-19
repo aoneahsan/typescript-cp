@@ -1,12 +1,10 @@
-/// <reference path="./components/project-input.ts" />
-/// <reference path="./components/project-list.ts" />
-/// <reference path="./utils/enums.ts" />
+import { ProjectInput } from './components/project-input.js';
+import { ProjectList } from './components/project-list.js';
+import { EProjectStatus } from './utils/enums.js';
 
-namespace App {
-	// --------------------------------------------------------------------------------------------
-	// ------------------------------------------ OBJECTS -----------------------------------------
-	// --------------------------------------------------------------------------------------------
-	new ProjectInput('project-input', 'app');
-	new ProjectList('project-list', 'app', EProjectStatus.active);
-	new ProjectList('project-list', 'app', EProjectStatus.finished);
-}
+// --------------------------------------------------------------------------------------------
+// ------------------------------------------ OBJECTS -----------------------------------------
+// --------------------------------------------------------------------------------------------
+new ProjectInput('project-input', 'app');
+new ProjectList('project-list', 'app', EProjectStatus.active);
+new ProjectList('project-list', 'app', EProjectStatus.finished);
